@@ -68,7 +68,7 @@ pip install -r requirements.txt
 
 1. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
 2. Select app: **Mail**, device: **Windows Computer**
-3. Copy the 16-character password (e.g. `kaaa aabc jyaw srkb`)
+3. Copy the 16-character password (e.g. `**** **** **** ****`)
 
 ### 3. Start Ollama and pull the model
 
@@ -126,7 +126,7 @@ Created automatically on first run. You can edit it directly.
 | `report_to` | Excel report address | `sumant.chakravarty@gmail.com` |
 | `ollama_url` | Ollama base URL | `http://localhost:11434` |
 | `ollama_model` | Model to use | `gemma4:31b-cloud` |
-| `fetch_mode` | Initial fetch scope | `unread` / `last7days` / `all` |
+| `fetch_mode` | Initial fetch scope | `unread` / `last1hour` / `all` |
 
 > **Security note:** `agent_config.json` contains your App Password in plain text. Do not commit it to version control. Add it to `.gitignore`.
 
