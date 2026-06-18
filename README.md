@@ -68,7 +68,19 @@ pip install -r requirements.txt
 
 1. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
 2. Select app: **Mail**, device: **Windows Computer**
-3. Copy the 16-character password (e.g. `**** **** **** ****`)
+3. Copy the 16-character password (e.g. `**** **** **** ****`){
+  "email": "sumant@ksaptech.com",
+  "password": "********",
+  "imap_host": "imap.gmail.com",
+  "imap_port": 993,
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587,
+  "complaint_to": "vikas@ksaptech.com",
+  "report_to": "sumant.chakravarty@gmail.com",
+  "ollama_url": "http://localhost:11434",
+  "ollama_model": "gemma4:31b-cloud",
+  "fetch_mode": "last1hour"
+}
 
 ### 3. Start Ollama and pull the model
 
@@ -84,6 +96,7 @@ python main.py
 ```
 
 The setup wizard will ask for your credentials and save them to `agent_config.json`.
+
 
 ---
 
