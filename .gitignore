@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Credentials — never commit
+agent_config.json
+
+# Runtime state
+processed_uids.json
+
+# Generated reports
+reports/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
