@@ -117,7 +117,7 @@ Created automatically on first run. You can edit it directly.
 | Key | Description | Example |
 |---|---|---|
 | `email` | Inbox to monitor | `sumant@ksaptech.com` |
-| `password` | Gmail App Password | `kaaa aabc jyaw srkb` |
+| `password` | Gmail App Password | `**** **** **** ****N` |
 | `imap_host` | IMAP server | `imap.gmail.com` |
 | `imap_port` | IMAP port (SSL) | `993` |
 | `smtp_host` | SMTP server | `smtp.gmail.com` |
