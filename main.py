@@ -23,9 +23,16 @@ from datetime import datetime
 from pathlib import Path
 
 from config_manager import get_config, reconfigure
-from email_handler import IMAPClient, SMTPClient
+from email_handler import IMAPClient, SMTPClient, generate_complaint_token
 from ai_analyzer import OllamaAnalyzer
 from excel_reporter import build_excel
+
+# Maps email category → (department display name, forwarding address)
+DEPARTMENT_ROUTING = {
+    "hr":         ("HR",         "hr@kasptech.com"),
+    "marketing":  ("Marketing",  "marketing@kasptech.com"),
+    "accounting": ("Accounting", "accounting@kasptech.com"),
+}
 
 OUTPUT_DIR   = Path(__file__).parent / "reports"
 UID_STORE    = Path(__file__).parent / "processed_uids.json"
@@ -93,17 +100,32 @@ def process_cycle(config: dict, dry_run: bool, processed_uids: set[str]) -> int:
         smtp = SMTPClient(config)
         smtp.connect()
 
-    # 4. Route product complaints immediately + auto-reply to customer
+    # 4. Route emails by category and auto-reply to customer
     for em in analysed:
+        category = em.get("category", "")
+
         if em.get("is_product_complaint"):
+            em["complaint_token"] = generate_complaint_token()
             if dry_run:
                 print(f"[DRY-RUN] Would forward complaint: {em['subject']}")
-                print(f"[DRY-RUN] Would reply to customer: {em['sender']}")
-                em["action_taken"] = "Forwarded + customer replied (dry-run)"
+                print(f"[DRY-RUN] Would reply to customer: {em['sender']}  (token: {em['complaint_token']})")
+                em["action_taken"] = f"Forwarded + customer replied (dry-run) [{em['complaint_token']}]"
             else:
                 smtp.forward_complaint(em)
                 smtp.reply_to_customer(em)
-                em["action_taken"] = "Forwarded + customer replied"
+                em["action_taken"] = f"Forwarded + customer replied [{em['complaint_token']}]"
+
+        elif category in DEPARTMENT_ROUTING:
+            dept_name, dept_email = DEPARTMENT_ROUTING[category]
+            if dry_run:
+                print(f"[DRY-RUN] Would forward to {dept_name} ({dept_email}): {em['subject']}")
+                print(f"[DRY-RUN] Would reply to customer: {em['sender']}")
+                em["action_taken"] = f"Forwarded to {dept_name} + customer replied (dry-run)"
+            else:
+                smtp.forward_to_department(em, dept_email, dept_name)
+                smtp.reply_to_customer_department(em, dept_name)
+                em["action_taken"] = f"Forwarded to {dept_name} + customer replied"
+
         else:
             em["action_taken"] = "Included in report"
 
