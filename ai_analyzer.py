@@ -18,6 +18,9 @@ CATEGORIES = [
     "internal_communication",
     "order_status",
     "feedback",
+    "hr",
+    "marketing",
+    "accounting",
     "other",
 ]
 
