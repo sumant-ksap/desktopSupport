@@ -7,7 +7,7 @@ An automated email monitoring agent that reads an inbox, classifies every new em
 ## What It Does
 
 ```
-New email arrives in sumant@ksaptech.com
+New email arrives in sumant@ksaptech.com (desktopSupport@ksaptech.com)
               │
               ▼
     AI analyses the email
