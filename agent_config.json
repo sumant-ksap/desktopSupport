@@ -1,0 +1,13 @@
+{
+  "email": "sumant@ksaptech.com", # desktopSupport@kasaptech.com
+  "password": "********", # Google App password 
+  "imap_host": "imap.gmail.com",
+  "imap_port": 993,
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587,
+  "complaint_to": "vikas@ksaptech.com",
+  "report_to": "sumant.chakravarty@gmail.com", # alpesh@ksaptech.com
+  "ollama_url": "http://localhost:11434",
+  "ollama_model": "gemma4:31b-cloud",
+  "fetch_mode": "last1hour"
+}
