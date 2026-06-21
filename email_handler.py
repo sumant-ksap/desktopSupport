@@ -8,6 +8,7 @@ import email
 import email.utils
 import email.header
 import textwrap
+import secrets
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -16,6 +17,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from pathlib import Path
 import html.parser
+
+
+def generate_complaint_token() -> str:
+    """Return a unique complaint reference token, e.g. CMP-20260621-A3F9."""
+    date_part = datetime.now().strftime("%Y%m%d")
+    rand_part = secrets.token_hex(2).upper()
+    return f"CMP-{date_part}-{rand_part}"
 
 
 # ── HTML → plain text ──────────────────────────────────────────────────────────
@@ -240,16 +248,18 @@ class SMTPClient:
         """Forward a product complaint to complaint_to (vikas@ksaptech.com)."""
         recipients = _parse_recipients(self._config["complaint_to"])
         sender_email = self._config["email"]
+        token = original.get("complaint_token", "N/A")
 
         msg = MIMEMultipart("mixed")
         msg["From"] = sender_email
         msg["To"] = ", ".join(recipients)
-        msg["Subject"] = f"[COMPLAINT] {original['subject']}"
+        msg["Subject"] = f"[COMPLAINT] [{token}] {original['subject']}"
         msg["Date"] = email.utils.formatdate(localtime=True)
 
         note = textwrap.dedent(f"""
             AUTOMATED ALERT — Desktop Support Agent
             ─────────────────────────────────────────────────────────
+            Complaint Token : {token}
             Its important as it complain of product.
 
             Original email details:
@@ -280,11 +290,15 @@ class SMTPClient:
             return
 
         sender_email = self._config["email"]
+        token = original.get("complaint_token", "N/A")
 
         msg = MIMEText(
             "Dear Customer,\n\n"
             "Thank you for reaching out to us.\n\n"
-            "Your problem will be attend shortly, please bear with us.\n\n"
+            f"Your complaint has been registered. Please use the following token number\n"
+            f"to track or chase this complaint:\n\n"
+            f"    Complaint Token: {token}\n\n"
+            "Your problem will be attended to shortly, please bear with us.\n\n"
             "We appreciate your patience and will get back to you as soon as possible.\n\n"
             "Regards,\n"
             "Support Team",
@@ -304,6 +318,73 @@ class SMTPClient:
         print(f"[SMTP] Auto-reply → {customer_address}")
         self._conn.sendmail(sender_email, [customer_address], msg.as_bytes())
         print("[SMTP] Customer acknowledgement sent.")
+
+    def forward_to_department(self, original: dict, dept_email: str, dept_name: str) -> None:
+        """Forward an email to a specific department (HR / Marketing / Accounting)."""
+        recipients = _parse_recipients(dept_email)
+        sender_email = self._config["email"]
+
+        msg = MIMEMultipart("mixed")
+        msg["From"] = sender_email
+        msg["To"] = ", ".join(recipients)
+        msg["Subject"] = f"[{dept_name.upper()}] {original['subject']}"
+        msg["Date"] = email.utils.formatdate(localtime=True)
+
+        note = textwrap.dedent(f"""
+            AUTOMATED ALERT — Desktop Support Agent
+            ─────────────────────────────────────────────────────────
+            This email has been routed to the {dept_name} department.
+
+            Original email details:
+              From      : {original['sender']}
+              Subject   : {original['subject']}
+              Date      : {original['date']}
+              Category  : {original.get('category', '')}
+              AI Summary: {original.get('summary', '')}
+            ─────────────────────────────────────────────────────────
+
+            Original message body:
+
+            {original['body']}
+        """).strip()
+
+        msg.attach(MIMEText(note, "plain", "utf-8"))
+        print(f"[SMTP] {dept_name} forward → {recipients}  |  {original['subject'][:60]}")
+        self._conn.sendmail(sender_email, recipients, msg.as_bytes())
+        print(f"[SMTP] Forwarded to {dept_name}.")
+
+    def reply_to_customer_department(self, original: dict, dept_name: str) -> None:
+        """Send an acknowledgement to a customer whose email was routed to a department."""
+        customer_address = email.utils.parseaddr(original["sender"])[1]
+        if not customer_address:
+            print(f"[SMTP] Could not parse customer address from: {original['sender']}")
+            return
+
+        sender_email = self._config["email"]
+
+        msg = MIMEText(
+            "Dear Customer,\n\n"
+            "Thank you for reaching out to us.\n\n"
+            f"Your email has been received and forwarded to our {dept_name} team "
+            f"who will review it and get back to you shortly.\n\n"
+            "We appreciate your patience.\n\n"
+            "Regards,\n"
+            "Support Team",
+            "plain",
+            "utf-8",
+        )
+        msg["From"]    = sender_email
+        msg["To"]      = customer_address
+        msg["Subject"] = f"Re: {original['subject']}"
+        msg["Date"]    = email.utils.formatdate(localtime=True)
+        msg_id = original.get("message_id")
+        if msg_id:
+            msg["In-Reply-To"] = msg_id
+            msg["References"]  = msg_id
+
+        print(f"[SMTP] {dept_name} auto-reply → {customer_address}")
+        self._conn.sendmail(sender_email, [customer_address], msg.as_bytes())
+        print(f"[SMTP] {dept_name} acknowledgement sent.")
 
     def send_excel_report(self, excel_path: Path) -> None:
         """Email the Excel decision chart to report_to (sumant.chakravarty@gmail.com)."""
